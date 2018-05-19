@@ -9,6 +9,7 @@ from keras.models import Model
 from keras.datasets import mnist
 from keras.losses import mse, binary_crossentropy
 from keras.utils import plot_model
+from keras.callbacks import ModelCheckpoint
 from keras import backend as K
 
 import numpy as np
@@ -103,6 +104,12 @@ z_dim = 128
 epochs = 30
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    help_ = "Load h5 model trained weights"
+    parser.add_argument("-w", "--weights", help=help_)
+    help_ = "Use mse loss instead of binary cross entropy (default)"
+    parser.add_argument("-m", "--mse", help=help_, action='store_true')
+    args = parser.parse_args()
     df_dim = 64
     height = np.array([64])
     width = np.array([64])
@@ -131,30 +138,50 @@ if __name__ == '__main__':
     kl_loss = K.sum(kl_loss, axis=-1)
     kl_loss *= -0.5
     vae_loss = K.mean(reconstruction_loss + kl_loss)
+
     vae.add_loss(vae_loss)
     vae.compile(optimizer='rmsprop')
     vae.summary()
+    print(vae)
     plot_model(vae, to_file='vae_dcnn.png', show_shapes=True)
 
-    vae.fit_generator(celeb_loader(batch_size=batch_size),
-            #epochs=1,
-            #steps_per_epoch=1
+    if args.weights:
+        print("loading weights",args.weights)
+        vae = vae.load_weights(args.weights)
+        print(vae)
+    else:
+        checkpoint_path = 'checkpoints/'
+        checkpointer = ModelCheckpoint(filepath=checkpoint_path + 'model-{epoch:05d}.hdf5', verbose=1)
+        vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
+                            randomize=True,
+                            batch_size=64,
+                            height=image_size,
+                            width=image_size),
+                #epochs=1,
+                #steps_per_epoch=1
 
-            epochs=100,
-            steps_per_epoch=int(20599/batch_size)
-            #validation_data=(x_test, None)
-            )
-    vae.save_weights('vae_dcnn_celebA.h5')
-    z_sample = np.random.uniform(size=(2,128))
+                epochs=500,
+                steps_per_epoch=int(20599/batch_size),
+                callbacks=[checkpointer]
+                #validation_data=(x_test, None)
+                )
+        vae.save_weights('vae_dcnn_celebA-01.h5')
+
+    #output sampling
+
+    num_outputs = 1
+    z_sample = np.random.uniform(size=(num_outputs,128))
     out_random = vaegan_decoder.predict(z_sample)
     for i in range (out_random.shape[0]):
         cv2.imshow("image",out_random[i])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    some_gen = celeb_loader()
-    data, _ = next(some_gen)
-    out = vae.predict(data)
 
+    some_gen = celeb_loader(batch_size=128)
+    data, _ = next(some_gen)
+    print(vae)
+    out_enc = vaegan_encoder.predict(data)
+    out = vaegan_decoder.predict(out_enc[2])
     print("data", data.shape)
     print("out", out.shape)
 
