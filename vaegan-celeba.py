@@ -156,7 +156,7 @@ if __name__ == '__main__':
     #print(vae)
     #plot_model(vae, to_file='vae_dcnn.png', show_shapes=True)
 
-    # Instantiate GAN model
+    # Instantiate VAE-GAN model
     gan_input = Input(shape=(128,))
     gan_output = vaegan_disc(vaegan_decoder(gan_input))
     print("gan_inputshape",  gan_input.shape)
@@ -205,7 +205,12 @@ if __name__ == '__main__':
         for i in range (epochs):
             for j in range (int(save_interval)):
                 # Load real images
-                real_images, _ = next(img_loader)
+                real_images_input, _ = next(img_loader)
+                # Train VAE
+                vae_metrics = vae.train_on_batch(real_images_input, None)
+                print("VAE metrics", vae_metrics)
+
+                real_images = vae.predict(real_images_input)
                 # Generate fake images
                 noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
                 fake_images = vaegan_decoder.predict(noise)
@@ -221,7 +226,7 @@ if __name__ == '__main__':
                 disc_acc = metrics[1]
                 log = "%d-%d: [discriminator loss: %f, acc: %f]" % (i,j, loss, disc_acc)
                 #print(log)
-                #
+
                 for k in range(1):
                     # Generate fake image
                     noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
