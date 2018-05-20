@@ -84,19 +84,19 @@ def generator(num_filters,z_dim, ch=3, kernel_size=5, strides=2):
     model = Conv2DTranspose(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_02')(model)
     model = BN(axis=3, name="dec_bn_03",  epsilon=1e-5)(model)
     model = LeakyReLU(0)(model)
-    '''
+
     model = Conv2DTranspose(num_filters,kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_03')(model)
     model = BN(axis=3, name="dec_bn_04",  epsilon=1e-5)(model)
     model = LeakyReLU(0)(model)
-    '''
-    model = Conv2DTranspose(ch, kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_04', activation="tanh")(model)
+
+    model = Conv2DTranspose(ch, kernel_size=kernel_size, strides=1, padding='same', name='dec_deconv2D_04', activation="tanh")(model)
 
     dec_model = Model([X], [model], name="decoder")
     return dec_model
 
-def discriminator(num_filters, rows, cols, z_dim,kernel_size=5, strides=2):
+def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=5, strides=2):
     model = Sequential()
-    X = Input(shape=(rows[-1],cols[-1],z_dim))
+    X = Input(shape=(rows[-1],cols[-1],ch))
     model = Conv2D(num_filters, kernel_size=kernel_size, padding='same', name='disc_conv2D_01')(X)
     model = BN(axis=3, name="enc_bn_01",  epsilon=1e-5)(model)
     model = LeakyReLU(0)(model)

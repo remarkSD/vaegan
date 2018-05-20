@@ -10,6 +10,7 @@ from keras.datasets import mnist
 from keras.losses import mse, binary_crossentropy
 from keras.utils import plot_model
 from keras.callbacks import ModelCheckpoint
+from keras import optimizers
 from keras import backend as K
 
 import numpy as np
@@ -99,9 +100,9 @@ channels = 3
 input_shape = (image_size, image_size, channels)
 batch_size = 128
 kernel_size = 3
-filters = 64
+filters = np.array([64,32])
 z_dim = 128
-epochs = 30
+epochs = 100
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -116,8 +117,8 @@ if __name__ == '__main__':
 
     inputs = Input(shape=input_shape)
 
-    vaegan_encoder = encoder(num_filters=64, ch=channels, rows=height, cols=width, z_dim=z_dim)
-    vaegan_decoder = generator(num_filters=32, z_dim=z_dim, ch=channels)
+    vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
+    vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
     vaegan_encoder.summary()
     vaegan_decoder.summary()
 
@@ -140,37 +141,43 @@ if __name__ == '__main__':
     vae_loss = K.mean(reconstruction_loss + kl_loss)
 
     vae.add_loss(vae_loss)
-    vae.compile(optimizer='rmsprop')
+    rmsprop = optimizers.rmsprop(lr=0.0001)
+    vae.compile(optimizer=rmsprop)
     vae.summary()
-    print(vae)
+    #print(vae)
     plot_model(vae, to_file='vae_dcnn.png', show_shapes=True)
 
     if args.weights:
-        print("loading weights",args.weights)
-        vae = vae.load_weights(args.weights)
-        print(vae)
+        #print("loading weights",args.weights)
+        vae.load_weights(args.weights)
+        #print(vae)
     else:
+        checkpoint_period = 5
         checkpoint_path = 'checkpoints/'
-        checkpointer = ModelCheckpoint(filepath=checkpoint_path + 'model-{epoch:05d}.hdf5', verbose=1)
+        checkpointer = ModelCheckpoint(filepath=checkpoint_path + 'model-{epoch:05d}.hdf5',
+                                        verbose=1,
+                                        save_weights_only=True,
+                                        period=checkpoint_period)
+        #vae.load_weights('checkpoints/model-00340.hdf5')
         vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
                             randomize=True,
-                            batch_size=64,
+                            batch_size=batch_size,
                             height=image_size,
                             width=image_size),
                 #epochs=1,
                 #steps_per_epoch=1
 
-                epochs=500,
+                epochs=epochs,
                 steps_per_epoch=int(20599/batch_size),
                 callbacks=[checkpointer]
                 #validation_data=(x_test, None)
                 )
-        vae.save_weights('vae_dcnn_celebA-01.h5')
+        vae.save_weights('vae_dcnn_celebA-02.h5')
 
     #output sampling
 
-    num_outputs = 1
-    z_sample = np.random.uniform(size=(num_outputs,128))
+    num_outputs = 128
+    z_sample = np.random.uniform(size=(num_outputs,128), low=-3.0, high=3.0)
     out_random = vaegan_decoder.predict(z_sample)
     for i in range (out_random.shape[0]):
         cv2.imshow("image",out_random[i])
@@ -179,9 +186,11 @@ if __name__ == '__main__':
 
     some_gen = celeb_loader(batch_size=128)
     data, _ = next(some_gen)
-    print(vae)
+    #print(vae)
     out_enc = vaegan_encoder.predict(data)
-    out = vaegan_decoder.predict(out_enc[2])
+    #out = vaegan_decoder.predict(out_enc[2])
+    '''
+    out = vae.predict(data)
     print("data", data.shape)
     print("out", out.shape)
 
@@ -194,6 +203,7 @@ if __name__ == '__main__':
         cv2.imshow("out image",out[i])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+    '''
 
 
     #plot_results(models, data, batch_size=batch_size, model_name="vae_dcnn_celebA")
