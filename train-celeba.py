@@ -168,7 +168,7 @@ if __name__ == '__main__':
                 #steps_per_epoch=1
 
                 epochs=epochs,
-                steps_per_epoch=int(20599/batch_size),
+                steps_per_epoch=int(202599/batch_size),
                 callbacks=[checkpointer]
                 #validation_data=(x_test, None)
                 )
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     z_sample = np.random.uniform(size=(num_outputs,128), low=-3.0, high=3.0)
     out_random = vaegan_decoder.predict(z_sample)
     for i in range (out_random.shape[0]):
-        cv2.imshow("image",out_random[i])
+        cv2.imshow("image from noise",out_random[i])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     #print(vae)
     out_enc = vaegan_encoder.predict(data)
     #out = vaegan_decoder.predict(out_enc[2])
-    '''
+
     out = vae.predict(data)
     print("data", data.shape)
     print("out", out.shape)
@@ -203,7 +203,7 @@ if __name__ == '__main__':
         cv2.imshow("out image",out[i])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    '''
+
 
 
     #plot_results(models, data, batch_size=batch_size, model_name="vae_dcnn_celebA")
