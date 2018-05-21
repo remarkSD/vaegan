@@ -159,7 +159,7 @@ if __name__ == '__main__':
                                         save_weights_only=True,
                                         period=checkpoint_period)
         #vae.load_weights('checkpoints/model-00340.hdf5')
-        vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
+        vae.fit_generator(celeb_loader(dir='/home/raimarc/Documents/img_align_celeba/',
                             randomize=True,
                             batch_size=batch_size,
                             height=image_size,
