@@ -98,11 +98,11 @@ image_size = 64
 channels = 3
 # network parameters
 input_shape = (image_size, image_size, channels)
-batch_size = 128
+batch_size = 64
 kernel_size = 3
 filters = np.array([64,32])
 z_dim = 128
-epochs = 100
+epochs = 1
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     vae_loss = K.mean(reconstruction_loss + kl_loss)
 
     vae.add_loss(vae_loss)
-    rmsprop = optimizers.rmsprop(lr=0.0001)
+    rmsprop = optimizers.rmsprop(lr=0.0003)
     vae.compile(optimizer=rmsprop)
     vae.summary()
     #print(vae)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                                         save_weights_only=True,
                                         period=checkpoint_period)
         #vae.load_weights('checkpoints/model-00340.hdf5')
-        vae.fit_generator(celeb_loader(dir='/home/raimarc/Documents/img_align_celeba/',
+        vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
                             randomize=True,
                             batch_size=batch_size,
                             height=image_size,
