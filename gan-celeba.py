@@ -133,7 +133,7 @@ if __name__ == '__main__':
                         optimizer=disc_optimizer,
                         metrics=['accuracy'])
     vaegan_disc.summary()
-
+    '''
     # Instantiate VAE model
     models = (vaegan_encoder, vaegan_decoder)
     outputs = vaegan_decoder(vaegan_encoder(inputs)[2])
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     vae.summary()
     #print(vae)
     #plot_model(vae, to_file='vae_dcnn.png', show_shapes=True)
-
+    '''
     # Instantiate GAN model
     gan_input = Input(shape=(128,))
     gan_output = vaegan_disc(vaegan_decoder(gan_input))
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     gan_optimizer = RMSprop(lr=lr*0.5, decay=decay)
     vaegan_disc.trainable = False
     gan = Model(gan_input, gan_output, name='gan')
-    gan.compile(loss='binary_crossentropy',
+    gan.compile(loss=mse,
                 optimizer=gan_optimizer,
                 metrics=['accuracy'])
     gan.summary()
@@ -198,7 +198,7 @@ if __name__ == '__main__':
                 )
         vae.save_weights('vae_dcnn_celebA-02.h5')
         '''
-        save_interval = int(20599/batch_size)
+        save_interval = int(202599/batch_size)
         #epochs=1
         #save_interval=10
         img_loader = celeb_loader(batch_size=batch_size)
@@ -221,18 +221,17 @@ if __name__ == '__main__':
                 disc_acc = metrics[1]
                 log = "%d-%d: [discriminator loss: %f, acc: %f]" % (i,j, loss, disc_acc)
                 #print(log)
-                #
-                for k in range(1):
-                    # Generate fake image
-                    noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
-                    # Label fake images as real
-                    y = np.ones([batch_size, 1])
-                    # Train the Adversarial network
-                    metrics = gan.train_on_batch(noise, y)
-                    loss = metrics[0]
-                    acc = metrics[1]
-                    logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
-                    print(logg)
+
+                # Generate fake image
+                noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+                # Label fake images as real
+                y = np.ones([batch_size, 1])
+                # Train the Adversarial network
+                metrics = gan.train_on_batch(noise, y)
+                loss = metrics[0]
+                acc = metrics[1]
+                logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
+                print(logg)
             model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
             print("Saving model to", model_save_path)
             gan.save_weights(model_save_path)

@@ -202,6 +202,14 @@ if __name__ == '__main__':
         #epochs=1
         #save_interval=10
         img_loader = celeb_loader(batch_size=batch_size)
+
+        for i in range(1000):
+            real_images_input, _ = next(img_loader)
+            # Train VAE
+            vae_metrics = vae.train_on_batch(real_images_input, None)
+            print("VAE training metrics", vae_metrics)
+
+
         for i in range (epochs):
             for j in range (int(save_interval)):
                 # Load real images
@@ -209,6 +217,7 @@ if __name__ == '__main__':
                 # Train VAE
                 vae_metrics = vae.train_on_batch(real_images_input, None)
                 print("VAE metrics", vae_metrics)
+
 
                 real_images = vae.predict(real_images_input)
                 # Generate fake images
