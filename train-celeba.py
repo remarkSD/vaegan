@@ -102,7 +102,7 @@ batch_size = 64
 kernel_size = 3
 filters = np.array([64,32])
 z_dim = 2048
-epochs = 100
+epochs = 10
 dir='/home/raimarc/Documents/img_align_celeba/'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -137,7 +137,7 @@ if __name__ == '__main__':
         reconstruction_loss = binary_crossentropy(K.flatten(inputs),
                                                 K.flatten(outputs))
 
-    reconstruction_loss *= image_size * image_size
+    reconstruction_loss *= image_size * image_size * channels
     kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
     kl_loss = K.sum(kl_loss, axis=-1)
     kl_loss *= -0.5
