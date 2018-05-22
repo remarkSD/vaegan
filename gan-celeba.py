@@ -95,6 +95,81 @@ from celebA_loader import *
 #     plt.show()
 #     '''
 #
+def build_generator(inputs, image_size):
+    """Build a Generator Model
+
+    Stacks of BN-ReLU-Conv2DTranpose to generate fake images
+    Output activation is sigmoid instead of tanh in [1].
+    Sigmoid converges easily.
+
+    # Arguments
+        inputs (Layer): Input layer of the generator (the z-vector)
+        image_size: Target size of one side (assuming square image)
+
+    # Returns
+        Model: Generator Model
+    """
+    print(inputs, image_size)
+    image_resize = image_size // 4
+    kernel_size = 5
+    layer_filters = [128, 64, 32, 3]
+
+    x = Dense(image_resize * image_resize * layer_filters[0])(inputs)
+    print(x)
+    x = Reshape((image_resize, image_resize, layer_filters[0]))(x)
+
+    for filters in layer_filters:
+        if filters > layer_filters[-2]:
+            strides = 2
+        else:
+            strides = 1
+
+        x = BN()(x)
+        x = Activation('relu')(x)
+        x = Conv2DTranspose(filters=filters,
+                            kernel_size=kernel_size,
+                            strides=strides,
+                            padding='same')(x)
+
+    x = Activation('sigmoid')(x)
+    generator = Model(inputs, x, name='generator')
+    return generator
+
+
+def build_discriminator(inputs):
+    """Build a Discriminator Model
+
+    Stacks of LeakyReLU-Conv2D to discriminate real from fake
+    The network does not converge with BN so it is not used here
+    unlike in [1]
+
+    # Arguments
+        inputs (Layer): Input layer of the discriminator (the image)
+
+    # Returns
+        Model: Discriminator Model
+    """
+    kernel_size = 5
+    layer_filters = [32, 64, 128, 256]
+
+    x = inputs
+    for filters in layer_filters:
+        if filters == layer_filters[-1]:
+            strides = 1
+        else:
+            strides = 2
+        x = LeakyReLU(alpha=0.2)(x)
+        x = Conv2D(filters=filters,
+                   kernel_size=kernel_size,
+                   strides=strides,
+                   padding='same')(x)
+
+    x = Flatten()(x)
+    x = Dense(1)(x)
+    x = Activation('sigmoid')(x)
+    discriminator = Model(inputs, x, name='discriminator')
+    return discriminator
+
 image_size = 64
 channels = 3
 # network parameters
@@ -102,9 +177,9 @@ input_shape = (image_size, image_size, channels)
 batch_size = 128
 kernel_size = 3
 filters = np.array([64,32])
-z_dim = 128
-epochs = 10
-lr = 0.0002
+z_dim = 2048
+epochs = 1
+lr = 0.0003
 decay = 6e-10
 
 if __name__ == '__main__':
@@ -121,10 +196,12 @@ if __name__ == '__main__':
     # Instantiate encoder, decoder/generator, discriminator models
     inputs = Input(shape=input_shape)
 
-    vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
-    vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
+    #vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
+    #vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
     vaegan_disc = discriminator(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
-    vaegan_encoder.summary()
+    vaegan_decoder = build_generator(Input(shape=(z_dim,)), image_size)
+    #vaegan_disc = build_discriminator(inputs)
+    #vaegan_encoder.summary()
     vaegan_decoder.summary()
 
 
@@ -157,15 +234,15 @@ if __name__ == '__main__':
     #plot_model(vae, to_file='vae_dcnn.png', show_shapes=True)
     '''
     # Instantiate GAN model
-    gan_input = Input(shape=(128,))
+    gan_input = Input(shape=(z_dim,))
     gan_output = vaegan_disc(vaegan_decoder(gan_input))
     print("gan_inputshape",  gan_input.shape)
     print("gan_outshape", gan_output.shape)
 
-    gan_optimizer = RMSprop(lr=lr*0.5, decay=decay)
+    gan_optimizer = RMSprop(lr=lr*0.5, decay=decay*0.5)
     vaegan_disc.trainable = False
     gan = Model(gan_input, gan_output, name='gan')
-    gan.compile(loss=mse,
+    gan.compile(loss='binary_crossentropy',
                 optimizer=gan_optimizer,
                 metrics=['accuracy'])
     gan.summary()
@@ -198,9 +275,9 @@ if __name__ == '__main__':
                 )
         vae.save_weights('vae_dcnn_celebA-02.h5')
         '''
-        save_interval = int(202599/batch_size)
-        #epochs=1
-        #save_interval=10
+        #save_interval = int(202599/batch_size)
+        epochs=1
+        save_interval=500
         img_loader = celeb_loader(batch_size=batch_size)
         for i in range (epochs):
             for j in range (int(save_interval)):
@@ -247,13 +324,13 @@ if __name__ == '__main__':
         cv2.imshow("image",out_random[i])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
+    '''
     some_gen = celeb_loader(batch_size=128)
     data, _ = next(some_gen)
     #print(vae)
     out_enc = vaegan_encoder.predict(data)
     #out = vaegan_decoder.predict(out_enc[2])
-    '''
+
     out = vae.predict(data)
     print("data", data.shape)
     print("out", out.shape)

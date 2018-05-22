@@ -105,28 +105,29 @@ def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=5, strides=2):
     model = Sequential()
     X = Input(shape=(rows[-1],cols[-1],ch))
     model = Conv2D(num_filters, kernel_size=kernel_size, strides=1, padding='same', name='disc_conv2D_01')(X)
-    model = BN(axis=3, name="enc_bn_01",  epsilon=1e-5)(model)
+    model = BN(axis=3, name="disc_bn_01",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
 
-    model = Conv2D(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='enc_conv2D_02')(model)
-    model = BN(axis=3, name="enc_bn_02",  epsilon=1e-5)(model)
+    model = Conv2D(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_02')(model)
+    model = BN(axis=3, name="disc_bn_02",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
 
-    model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='enc_conv2D_03')(model)
-    model = BN(axis=3, name="enc_bn_03",  epsilon=1e-5)(model)
+    model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_03')(model)
+    model = BN(axis=3, name="disc_bn_03",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
 
-    model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='enc_conv2D_04')(model)
-    model = BN(axis=3, name="enc_bn_04",  epsilon=1e-5)(model)
+    model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_04')(model)
+    model = BN(axis=3, name="disc_bn_04",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
 
     #model = Reshape((8,8,256))(model)
     model = Flatten()(model)
-    model = Dense(512, name="enc_dense_01")(model)
-    model = BN(name="enc_bn_05",  epsilon=1e-5)(model)
+    model = Dense(512, name="disc_dense_01")(model)
+    model = BN(name="disc_bn_05",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
 
-    model = Dense(1, name="enc_dense_02", activation="sigmoid")(model)
+    model = Dense(1, name="disc_dense_02")(model)
+    model = Activation('sigmoid', name='disc_sigmoid')(model)
 
     disc_model = Model([X], [model],name="discriminator")
 
