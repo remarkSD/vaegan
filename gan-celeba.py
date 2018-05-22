@@ -198,9 +198,9 @@ if __name__ == '__main__':
 
     #vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
     #vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
-    vaegan_disc = discriminator(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
+    #vaegan_disc = discriminator(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
     vaegan_decoder = build_generator(Input(shape=(z_dim,)), image_size)
-    #vaegan_disc = build_discriminator(inputs)
+    vaegan_disc = build_discriminator(inputs)
     #vaegan_encoder.summary()
     vaegan_decoder.summary()
 
