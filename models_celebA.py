@@ -77,11 +77,11 @@ def generator(num_filters,z_dim=2048, ch=3, kernel_size=5, strides=2):
     model = Sequential()
     X = Input(shape=(z_dim,))
     model = Dense(8*8*256, input_shape=(z_dim,), name="dec_dense_01")(X)
-    model = Reshape((8,8,256))(model)
     #model = Dense(7*7*32, input_shape=(z_dim,), name="dec_dense_01")(X)
     #model = Reshape((7,7,32))(model)
-    model = BN(axis=3, name="dec_bn_01",  epsilon=1e-5)(model)
+    model = BN(name="dec_bn_01",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
+    model = Reshape((8,8,256))(model)
 
     model = Conv2DTranspose(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_01')(model)
     model = BN(axis=3, name="dec_bn_02",  epsilon=1e-5)(model)
@@ -95,7 +95,8 @@ def generator(num_filters,z_dim=2048, ch=3, kernel_size=5, strides=2):
     model = BN(axis=3, name="dec_bn_04",  epsilon=1e-5)(model)
     model = Activation('relu')(model)
 
-    model = Conv2DTranspose(ch, kernel_size=kernel_size, strides=1, padding='same', name='dec_deconv2D_04', activation="tanh")(model)
+    model = Conv2DTranspose(ch, kernel_size=kernel_size, strides=1, padding='same', name='dec_deconv2D_04')(model)
+    model = Activation('tanh')(model)
 
     dec_model = Model([X], [model], name="decoder")
     return dec_model
