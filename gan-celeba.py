@@ -178,7 +178,7 @@ batch_size = 128
 kernel_size = 3
 filters = np.array([64,32])
 z_dim = 2048
-epochs = 1
+epochs = 10
 lr = 0.0003
 decay = 6e-10
 
@@ -275,9 +275,9 @@ if __name__ == '__main__':
                 )
         vae.save_weights('vae_dcnn_celebA-02.h5')
         '''
-        #save_interval = int(202599/batch_size)
+        save_interval = int(202599/batch_size)
         epochs=1
-        save_interval=500
+        #save_interval=500
         img_loader = celeb_loader(batch_size=batch_size)
         for i in range (epochs):
             for j in range (int(save_interval)):
