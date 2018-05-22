@@ -31,7 +31,7 @@ def sampling(args):
     epsilon = K.random_normal(shape=(batch, dim))
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
-def encoder(num_filters, ch, rows, cols,z_dim=128, kernel_size=5, strides=2):
+def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=5, strides=2):
 
     model = Sequential()
     X = Input(shape=(rows[-1], cols[-1], ch))
@@ -50,12 +50,18 @@ def encoder(num_filters, ch, rows, cols,z_dim=128, kernel_size=5, strides=2):
 
     #model = Reshape((8,8,256))(model)
     model = Flatten()(model)
-    model = Dense(2048, name="enc_dense_01")(model)
-    model = BN(name="enc_bn_04",  epsilon=1e-5)(model)
-    encoded_model = LeakyReLU(.2)(model)
+    #model = Dense(2048, name="enc_dense_01")(model)
+    #model = BN(name="enc_bn_04",  epsilon=1e-5)(model)
+    #encoded_model = LeakyReLU(.2)(model)
 
-    mean = Dense(z_dim, name="e_h3_lin")(encoded_model)
-    logsigma = Dense(z_dim, name="e_h4_lin", activation="tanh")(encoded_model)
+    mean = Dense(z_dim, name="e_mean_dense")(model)
+    logsigma = Dense(z_dim, name="e_sigma_dense")(model)
+
+    mean = BN(name="enc_mean_bn",  epsilon=1e-5)(mean)
+    logsigma = BN(name="enc_sigma_bn",  epsilon=1e-5)(logsigma)
+
+    mean = Activation('relu', name="enc_mean_relu")(mean)
+    logsigma = Activation('relu', name="enc_sigma_relu")(logsigma)
     z = Lambda(sampling, output_shape=(z_dim,), name='z')([mean, logsigma])
     meansigma = Model([X], [mean, logsigma, z], name="encoder")
 
@@ -67,7 +73,7 @@ def encoder(num_filters, ch, rows, cols,z_dim=128, kernel_size=5, strides=2):
 #    dec_model = Model(X, model)
     return meansigma
 
-def generator(num_filters,z_dim, ch=3, kernel_size=5, strides=2):
+def generator(num_filters,z_dim=2048, ch=3, kernel_size=5, strides=2):
     model = Sequential()
     X = Input(shape=(z_dim,))
     model = Dense(8*8*256, input_shape=(z_dim,), name="dec_dense_01")(X)

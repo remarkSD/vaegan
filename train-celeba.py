@@ -101,9 +101,9 @@ input_shape = (image_size, image_size, channels)
 batch_size = 64
 kernel_size = 3
 filters = np.array([64,32])
-z_dim = 128
-epochs = 1
-
+z_dim = 2048
+epochs = 10
+dir='/home/raimarc/Documents/img_align_celeba/'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     help_ = "Load h5 model trained weights"
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                                         save_weights_only=True,
                                         period=checkpoint_period)
         #vae.load_weights('checkpoints/model-00340.hdf5')
-        vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
+        vae.fit_generator(celeb_loader(dir=dir,
                             randomize=True,
                             batch_size=batch_size,
                             height=image_size,
@@ -172,11 +172,11 @@ if __name__ == '__main__':
                 callbacks=[checkpointer]
                 #validation_data=(x_test, None)
                 )
-        vae.save_weights('vae_dcnn_celebA-02.h5')
+        vae.save_weights('vae_celebA_2048lat.h5')
 
     #output sampling
 
-    num_outputs = 128
+    num_outputs = 1
     z_sample = np.random.uniform(size=(num_outputs,128), low=-3.0, high=3.0)
     out_random = vaegan_decoder.predict(z_sample)
     for i in range (out_random.shape[0]):
@@ -184,7 +184,11 @@ if __name__ == '__main__':
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    some_gen = celeb_loader(batch_size=128)
+    some_gen = celeb_loader(batch_size=128,
+                            dir=dir,
+                            randomize=True,
+                            height=image_size,
+                            width=image_size)
     data, _ = next(some_gen)
     #print(vae)
     out_enc = vaegan_encoder.predict(data)
