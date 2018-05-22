@@ -8,16 +8,30 @@ def celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/
                     randomize=True,
                     batch_size=64,
                     height=64,
-                    width=64):
+                    width=64,
+                    split=False,
+                    type='train'):
     list = os.listdir(dir) # dir is your directory path
     number_files = len(list)
     list.sort()
-    #print(list)
-    #print (number_files)
+
+    if split == True:
+        test_list = list[9::10]
+        train_list = list[:]
+        del train_list[9::10]
+
+        if type == 'train':
+            list = train_list
+        elif type == 'test':
+            list = test_list
+
+    #print(np.array(list).reshape((-1,1)))
+    #print (len(list))
     while(1):
         if randomize == True:
             random.shuffle(list)
         img_list = list[:]
+        #print(np.array(img_list).reshape((-1,1)))
 
         while img_list:
             img_stack = np.zeros((batch_size, height, width,3),dtype=np.float32)
@@ -54,8 +68,8 @@ if __name__ == '__main__':
     print("MAIN")
     some_gen = celeb_loader()
     a,b = next(some_gen)
-    print(a[0,:,:,:])
-    for i in range (a.shape[0]):
-        cv2.imshow("image",a[i])
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+    #print(a[0,:,:,:])
+    # for i in range (a.shape[0]):
+    #     cv2.imshow("image",a[i])
+    #     cv2.waitKey(0)
+    #     cv2.destroyAllWindows()
