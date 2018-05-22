@@ -102,7 +102,7 @@ batch_size = 64
 kernel_size = 3
 filters = np.array([64,32])
 z_dim = 2048
-epochs = 10
+epochs = 100
 dir='/home/raimarc/Documents/img_align_celeba/'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -131,8 +131,11 @@ if __name__ == '__main__':
     #vaegan_disc.compile(optimizer='RMSProp', loss='binary_crossentropy')
 
     #vaegan_disc.summary()
-    reconstruction_loss = binary_crossentropy(K.flatten(inputs),
-                                              K.flatten(outputs))
+    if args.mse:
+        reconstruction_loss = mse(K.flatten(inputs), K.flatten(outputs))
+    else:
+        reconstruction_loss = binary_crossentropy(K.flatten(inputs),
+                                                K.flatten(outputs))
 
     reconstruction_loss *= image_size * image_size
     kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
@@ -176,8 +179,9 @@ if __name__ == '__main__':
 
     #output sampling
 
-    num_outputs = 1
-    z_sample = np.random.uniform(size=(num_outputs,128), low=-3.0, high=3.0)
+    num_outputs = 10
+    #z_sample = np.random.uniform(size=(num_outputs,z_dim), low=-3.0, high=3.0)
+    z_sample = np.random.normal(size=(num_outputs,z_dim))
     out_random = vaegan_decoder.predict(z_sample)
     for i in range (out_random.shape[0]):
         cv2.imshow("image from noise",out_random[i])
@@ -201,7 +205,6 @@ if __name__ == '__main__':
     for i in range (data.shape[0]):
         cv2.imshow("image",data[i])
         cv2.waitKey(0)
-        cv2.destroyAllWindows()
 
 
         cv2.imshow("out image",out[i])
