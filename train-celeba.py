@@ -99,7 +99,7 @@ channels = 3
 # network parameters
 input_shape = (image_size, image_size, channels)
 batch_size = 64
-kernel_size = 3
+kernel_size = 5
 filters = np.array([64,32])
 z_dim = 2048
 epochs = 10
@@ -117,8 +117,10 @@ if __name__ == '__main__':
 
     inputs = Input(shape=input_shape)
 
-    vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
-    vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
+    vaegan_encoder = encoder(num_filters=filters[0], ch=channels,
+                                rows=height, cols=width, z_dim=z_dim, kernel_size=kernel_size)
+    vaegan_decoder = generator(num_filters=filters[1], ch=channels,
+                                z_dim=z_dim, kernel_size=kernel_size)
     vaegan_encoder.summary()
     vaegan_decoder.summary()
 
