@@ -155,7 +155,7 @@ if __name__ == '__main__':
         vae.load_weights(args.weights)
         #print(vae)
     else:
-        checkpoint_period = 5
+        checkpoint_period = 1
         checkpoint_path = 'checkpoints/'
         checkpointer = ModelCheckpoint(filepath=checkpoint_path + 'model-{epoch:05d}.hdf5',
                                         verbose=1,
