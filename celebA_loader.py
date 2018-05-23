@@ -10,7 +10,8 @@ def celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/
                     height=64,
                     width=64,
                     split=False,
-                    type='train'):
+                    type='train',
+                    norm=False):
     list = os.listdir(dir) # dir is your directory path
     number_files = len(list)
     list.sort()
@@ -48,7 +49,11 @@ def celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/
 
                 #print(img.shape)
                 if img.shape != (64,64,3):
+                    #Convert range: 0 to 1
                     img_stack[i, :, :,:] = cv2.resize(img,(height,width))/255
+                    # Convert range: -1 to 1
+                    if norm == True:
+                        img_stack[i, :, :,:] = img_stack[i, :, :,:]*2 - 1
                     #cv2.imshow("image",img_stack[i, :, :,:])
                     #cv2.waitKey(0)
                     #cv2.destroyAllWindows()
