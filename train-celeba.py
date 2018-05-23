@@ -102,8 +102,8 @@ batch_size = 64
 kernel_size = 5
 filters = np.array([64,32])
 z_dim = 2048
-epochs = 100
-dir='/home/raimarc/Documents/img_align_celeba/'
+epochs = 10
+dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     help_ = "Load h5 model trained weights"
@@ -186,6 +186,8 @@ if __name__ == '__main__':
     #z_sample = np.random.uniform(size=(num_outputs,z_dim), low=-3.0, high=3.0)
     z_sample = np.random.normal(size=(num_outputs,z_dim))
     out_random = vaegan_decoder.predict(z_sample)
+    out_random = (out_random + 1)*127.5
+    out_random = out_random.astype(np.uint8)
     for i in range (out_random.shape[0]):
         cv2.imshow("image from noise",out_random[i])
         cv2.waitKey(0)
@@ -200,16 +202,19 @@ if __name__ == '__main__':
     data, _ = next(some_gen)
     #print(vae)
     out_enc = vaegan_encoder.predict(data)
-    out_enc = (out_enc + 1)*127.5
-    out_enc = out_enc.astype(np.uint8)
+
     print("MAX", np.max(out_enc))
     print("MIN", np.min(out_enc))
     #out = vaegan_decoder.predict(out_enc[2])
 
     out = vae.predict(data)
+    out = (out + 1)*127.5
+    out = out.astype(np.uint8)
     print("data", data.shape)
     print("out", out.shape)
 
+    data = (data+1)*127.5
+    data = data.astype(np.uint8)
     for i in range (data.shape[0]):
         cv2.imshow("image",data[i])
         cv2.waitKey(0)
