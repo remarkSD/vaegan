@@ -37,16 +37,16 @@ def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=5, strides=2):
     X = Input(shape=(rows[-1], cols[-1], ch))
 
     model = Conv2D(num_filters, kernel_size=kernel_size, strides=strides, padding='same', name='enc_conv2D_01', input_shape=(rows[-1], cols[-1], ch))(X)
-    model = BN(axis=3, name="enc_bn_01",  epsilon=1e-5)(model)
-    model = Activation('relu')(model)
+    model = BN(name="enc_bn_01")(model)
+    model = LeakyReLU(0.2)(model)
 
     model = Conv2D(num_filters*2,kernel_size=kernel_size, strides=strides, padding='same', name='enc_conv2D_02')(model)
-    model = BN(axis=3, name="enc_bn_02",  epsilon=1e-5)(model)
-    model = Activation('relu')(model)
+    model = BN(name="enc_bn_02")(model)
+    model = LeakyReLU(0.2)(model)
 
     model = Conv2D(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='enc_conv2D_03')(model)
-    model = BN(axis=3, name="enc_bn_03",  epsilon=1e-5)(model)
-    model = Activation('relu')(model)
+    model = BN( name="enc_bn_03")(model)
+    model = LeakyReLU(0.2)(model)
 
     #model = Reshape((8,8,256))(model)
     model = Flatten()(model)
@@ -57,8 +57,8 @@ def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=5, strides=2):
     mean = Dense(z_dim, name="e_mean_dense")(model)
     logsigma = Dense(z_dim, name="e_sigma_dense")(model)
 
-    mean = BN(name="enc_mean_bn",  epsilon=1e-5)(mean)
-    logsigma = BN(name="enc_sigma_bn",  epsilon=1e-5)(logsigma)
+    mean = BN(name="enc_mean_bn")(mean)
+    logsigma = BN(name="enc_sigma_bn")(logsigma)
 
     mean = Activation('relu', name="enc_mean_relu")(mean)
     logsigma = Activation('relu', name="enc_sigma_relu")(logsigma)
@@ -79,23 +79,23 @@ def generator(num_filters,z_dim=2048, ch=3, kernel_size=5, strides=2):
     model = Dense(8*8*256, input_shape=(z_dim,), name="dec_dense_01")(X)
     #model = Dense(7*7*32, input_shape=(z_dim,), name="dec_dense_01")(X)
     #model = Reshape((7,7,32))(model)
-    model = BN(name="dec_bn_01",  epsilon=1e-5)(model)
+    model = BN(name="dec_bn_01")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
     model = Reshape((8,8,256))(model)
 
     model = Conv2DTranspose(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_01')(model)
-    model = BN(axis=3, name="dec_bn_02",  epsilon=1e-5)(model)
+    model = BN(name="dec_bn_02")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     model = Conv2DTranspose(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_02')(model)
-    model = BN(axis=3, name="dec_bn_03",  epsilon=1e-5)(model)
+    model = BN(name="dec_bn_03")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     model = Conv2DTranspose(num_filters,kernel_size=kernel_size, strides=strides, padding='same', name='dec_deconv2D_03')(model)
-    model = BN(axis=3, name="dec_bn_04",  epsilon=1e-5)(model)
+    model = BN(name="dec_bn_04")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
@@ -109,29 +109,29 @@ def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=5, strides=2):
     model = Sequential()
     X = Input(shape=(rows[-1],cols[-1],ch))
     model = Conv2D(num_filters, kernel_size=kernel_size, strides=1, padding='same', name='disc_conv2D_01')(X)
-    model = BN(axis=3, name="disc_bn_01",  epsilon=1e-5)(model)
+    model = BN(name="disc_bn_01")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     model = Conv2D(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_02')(model)
-    model = BN(axis=3, name="disc_bn_02",  epsilon=1e-5)(model)
+    model = BN( name="disc_bn_02")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_03')(model)
-    model = BN(axis=3, name="disc_bn_03",  epsilon=1e-5)(model)
+    model = BN(name="disc_bn_03")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_04')(model)
-    model = BN(axis=3, name="disc_bn_04",  epsilon=1e-5)(model)
+    model = BN(name="disc_bn_04")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     #model = Reshape((8,8,256))(model)
     model = Flatten()(model)
     model = Dense(512, name="disc_dense_01")(model)
-    model = BN(name="disc_bn_05",  epsilon=1e-5)(model)
+    model = BN(name="disc_bn_05")(model)
     model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
