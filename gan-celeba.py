@@ -174,13 +174,13 @@ image_size = 64
 channels = 3
 # network parameters
 input_shape = (image_size, image_size, channels)
-batch_size = 128
-kernel_size = 3
+batch_size = 64
+kernel_size = (5,5)
 filters = np.array([64,32])
-z_dim = 2048
-epochs = 1
+z_dim = 128
+epochs = 100
 lr = 0.0003
-decay = 6e-10
+decay = 0
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -189,7 +189,6 @@ if __name__ == '__main__':
     help_ = "Use mse loss instead of binary cross entropy (default)"
     parser.add_argument("-m", "--mse", help=help_, action='store_true')
     args = parser.parse_args()
-    df_dim = 64
     height = np.array([64])
     width = np.array([64])
 
@@ -205,7 +204,7 @@ if __name__ == '__main__':
     vaegan_decoder.summary()
 
 
-    disc_optimizer = RMSprop(lr=lr, decay=decay)
+    disc_optimizer = RMSprop(lr=lr)
     vaegan_disc.compile(loss='binary_crossentropy',
                         optimizer=disc_optimizer,
                         metrics=['accuracy'])
@@ -239,7 +238,7 @@ if __name__ == '__main__':
     print("gan_inputshape",  gan_input.shape)
     print("gan_outshape", gan_output.shape)
 
-    gan_optimizer = RMSprop(lr=lr*0.5, decay=decay*0.5)
+    gan_optimizer = RMSprop(lr=lr)
     vaegan_disc.trainable = False
     gan = Model(gan_input, gan_output, name='gan')
     gan.compile(loss='binary_crossentropy',
@@ -251,97 +250,101 @@ if __name__ == '__main__':
         #print("loading weights",args.weights)
         gan.load_weights(args.weights)
         #print(vae)
-    else:
-        '''
-        checkpoint_period = 5
-        checkpoint_path = 'checkpoints/'
-        checkpointer = ModelCheckpoint(filepath=checkpoint_path + 'model-{epoch:05d}.hdf5',
-                                        verbose=1,
-                                        save_weights_only=True,
-                                        period=checkpoint_period)
-        #vae.load_weights('checkpoints/model-00340.hdf5')
-        vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
-                            randomize=True,
-                            batch_size=batch_size,
-                            height=image_size,
-                            width=image_size),
-                #epochs=1,
-                #steps_per_epoch=1
 
-                epochs=epochs,
-                steps_per_epoch=int(20599/batch_size),
-                callbacks=[checkpointer]
-                #validation_data=(x_test, None)
-                )
-        vae.save_weights('vae_dcnn_celebA-02.h5')
-        '''
-        save_interval = int(202599/batch_size)
-        epochs=1
-        #save_interval=50
-        img_loader = celeb_loader(batch_size=batch_size)
-        for i in range (epochs):
-            for j in range (int(save_interval)):
-                # Load real images
-                real_images, _ = next(img_loader)
-                # Generate fake images
-                noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
-                fake_images = vaegan_decoder.predict(noise)
-                #x = np.concatenate((real_images, fake_images))
-                #print(x.shape)
-                # Label real and fake images
-                y1 = np.ones([batch_size, 1])
-                y2 = np.zeros([batch_size, 1])
-                #print(y.shape)
-                # Train Discriminator
-                metrics = vaegan_disc.train_on_batch(real_images, y1)
-                loss = metrics[0]
-                disc_acc = metrics[1]
-                log = "%d-%d: [discriminator loss (real): %f, acc: %f]" % (i,j, loss, disc_acc)
-                #print(log)
+    '''
+    checkpoint_period = 5
+    checkpoint_path = 'checkpoints/'
+    checkpointer = ModelCheckpoint(filepath=checkpoint_path + 'model-{epoch:05d}.hdf5',
+                                    verbose=1,
+                                    save_weights_only=True,
+                                    period=checkpoint_period)
+    #vae.load_weights('checkpoints/model-00340.hdf5')
+    vae.fit_generator(celeb_loader(dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/',
+                        randomize=True,
+                        batch_size=batch_size,
+                        height=image_size,
+                        width=image_size),
+            #epochs=1,
+            #steps_per_epoch=1
 
-                metrics = vaegan_disc.train_on_batch(fake_images, y2)
-                loss = metrics[0]
-                disc_acc = metrics[1]
-                log = "%s [discriminator loss (fake): %f, acc: %f]" % (log, loss, disc_acc)
-                #print(log)
+            epochs=epochs,
+            steps_per_epoch=int(20599/batch_size),
+            callbacks=[checkpointer]
+            #validation_data=(x_test, None)
+            )
+    vae.save_weights('vae_dcnn_celebA-02.h5')
+    '''
+    save_interval = int(202599/batch_size)
+    #epochs=1
+    #save_interval=50
+    img_loader = celeb_loader(dir='/home/raimarc/Documents/img_align_celeba/',
+                            batch_size=batch_size, norm=True)
 
-                # Generate fake image
-                noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
-                # Label fake images as real
-                y = np.ones([batch_size, 1])
-                # Train the Adversarial network
-                metrics = gan.train_on_batch(noise, y)
-                loss = metrics[0]
-                acc = metrics[1]
-                logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
-                print(logg)
+    z_sample = np.random.uniform(size=(25,z_dim), low=-1.0, high=1.0)
+    for i in range (epochs):
+        for j in range (int(save_interval)):
+            # Load real images
+            real_images, _ = next(img_loader)
+            # Generate fake images
+            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            fake_images = vaegan_decoder.predict(noise)
+            #x = np.concatenate((real_images, fake_images))
+            #print(x.shape)
+            # Label real and fake images
+            y1 = np.ones([batch_size, 1])
+            y2 = np.zeros([batch_size, 1])
+            #print(y.shape)
+            # Train Discriminator
+            metrics = vaegan_disc.train_on_batch(real_images, y1)
+            loss = metrics[0]
+            disc_acc = metrics[1]
+            log = "%d-%d: [discriminator loss (real): %f, acc: %f]" % (i,j, loss, disc_acc)
+            #print(log)
 
-                if j % 500 == 0:
-                    model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
-                    print("Saving model to", model_save_path)
-                    gan.save_weights(model_save_path)
-                    z_sample = np.random.uniform(size=(1,z_dim), low=-1.0, high=1.0)
-                    out_random = vaegan_decoder.predict(z_sample)
-                    out_filename = 'gan_images/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
-                    out_random = out_random*255
-                    out_random.astype(np.uint8)
-                    #cv2.imshow("image",out_random[0])
-                    #cv2.waitKey(0)
-                    #cv2.destroyAllWindows()
-                    cv2.imwrite(out_filename, out_random[0])
+            metrics = vaegan_disc.train_on_batch(fake_images, y2)
+            loss = metrics[0]
+            disc_acc = metrics[1]
+            log = "%s [discriminator loss (fake): %f, acc: %f]" % (log, loss, disc_acc)
+            #print(log)
 
-            model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
-            print("Saving model to", model_save_path)
-            gan.save_weights(model_save_path)
-            z_sample = np.random.uniform(size=(1,z_dim), low=-1.0, high=1.0)
-            out_random = vaegan_decoder.predict(z_sample)
-            out_filename = 'gan_images/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
-            out_random = out_random*255
-            out_random.astype(np.uint8)
-            #cv2.imshow("image",out_random[0])
-            #cv2.waitKey(0)
-            #cv2.destroyAllWindows()
-            cv2.imwrite(out_filename, out_random[0])
+            # Generate fake image
+            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            # Label fake images as real
+            y = np.ones([batch_size, 1])
+            # Train the Adversarial network
+            metrics = gan.train_on_batch(noise, y)
+            loss = metrics[0]
+            acc = metrics[1]
+            logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
+            print(logg)
+
+            if j % 200 == 0 or j == save_interval-1:
+                model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+                print("Saving model to", model_save_path)
+                gan.save_weights(model_save_path)
+
+                # Predict Sample
+                out_random = vaegan_decoder.predict(z_sample)
+                # Unnormalize samples
+                out_random = (out_random + 1)*127.5
+                out_random = out_random.astype(np.uint8)
+                print("MAX", np.max(out_random))
+                print("MIN", np.min(out_random))
+
+                # Put samples in grid
+                fig = np.zeros((64*5,64*5,3))
+                for k1 in range (5):
+                    for k2 in range (5):
+                        fig[64*k2:64*(k2+1),64*k1:64*(k1+1),:] = out_random[k1*5+k2]
+                #cv2.imshow("image",out_random[0])
+                #cv2.waitKey(0)
+                #cv2.destroyAllWindows()
+
+                # Write samples
+                out_filename = 'gan_images/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+                cv2.imwrite(out_filename, fig)
+
+
 
 
 
