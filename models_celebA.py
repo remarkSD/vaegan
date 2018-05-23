@@ -31,7 +31,7 @@ def sampling(args):
     epsilon = K.random_normal(shape=(batch, dim))
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
-def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=5, strides=2):
+def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=(5,5), strides=(2,2)):
 
     model = Sequential()
     X = Input(shape=(rows[-1], cols[-1], ch))
@@ -73,7 +73,7 @@ def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=5, strides=2):
 #    dec_model = Model(X, model)
     return meansigma
 
-def generator(num_filters,z_dim=2048, ch=3, kernel_size=5, strides=2):
+def generator(num_filters,z_dim=2048, ch=3, kernel_size=(5,5), strides=(2,2)):
     model = Sequential()
     X = Input(shape=(z_dim,))
     model = Dense(8*8*256, input_shape=(z_dim,), name="dec_dense_01")(X)
@@ -105,7 +105,7 @@ def generator(num_filters,z_dim=2048, ch=3, kernel_size=5, strides=2):
     dec_model = Model([X], [model], name="decoder")
     return dec_model
 
-def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=5, strides=2):
+def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), strides=(2,2)):
     model = Sequential()
     X = Input(shape=(rows[-1],cols[-1],ch))
     model = Conv2D(num_filters, kernel_size=kernel_size, strides=1, padding='same', name='disc_conv2D_01')(X)
