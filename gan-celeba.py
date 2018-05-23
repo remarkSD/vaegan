@@ -178,7 +178,7 @@ batch_size = 64
 kernel_size = (5,5)
 filters = np.array([64,32])
 z_dim = 128
-epochs = 100
+epochs = 1000
 lr = 0.0003
 decay = 0
 
