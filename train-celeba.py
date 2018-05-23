@@ -168,7 +168,8 @@ if __name__ == '__main__':
                             randomize=True,
                             batch_size=batch_size,
                             height=image_size,
-                            width=image_size),
+                            width=image_size,
+                            norm=True),
                 #epochs=1,
                 #steps_per_epoch=1
 
@@ -194,10 +195,15 @@ if __name__ == '__main__':
                             dir=dir,
                             randomize=True,
                             height=image_size,
-                            width=image_size)
+                            width=image_size,
+                            norm=True)
     data, _ = next(some_gen)
     #print(vae)
     out_enc = vaegan_encoder.predict(data)
+    out_enc = (out_enc + 1)*127.5
+    out_enc = out_enc.astype(np.uint8)
+    print("MAX", np.max(out_enc))
+    print("MIN", np.min(out_enc))
     #out = vaegan_decoder.predict(out_enc[2])
 
     out = vae.predict(data)
