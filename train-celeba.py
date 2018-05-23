@@ -102,7 +102,7 @@ batch_size = 64
 kernel_size = 5
 filters = np.array([64,32])
 z_dim = 2048
-epochs = 10
+epochs = 100
 dir='/home/raimarc/Documents/img_align_celeba/'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
