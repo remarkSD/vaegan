@@ -178,7 +178,7 @@ batch_size = 128
 kernel_size = 3
 filters = np.array([64,32])
 z_dim = 2048
-epochs = 10
+epochs = 1
 lr = 0.0003
 decay = 6e-10
 
@@ -197,10 +197,10 @@ if __name__ == '__main__':
     inputs = Input(shape=input_shape)
 
     #vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
-    #vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
-    #vaegan_disc = discriminator(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
-    vaegan_decoder = build_generator(Input(shape=(z_dim,)), image_size)
-    vaegan_disc = build_discriminator(inputs)
+    vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
+    vaegan_disc = discriminator(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
+    #vaegan_decoder = build_generator(Input(shape=(z_dim,)), image_size)
+    #vaegan_disc = build_discriminator(inputs)
     #vaegan_encoder.summary()
     vaegan_decoder.summary()
 
@@ -277,7 +277,7 @@ if __name__ == '__main__':
         '''
         save_interval = int(202599/batch_size)
         epochs=1
-        #save_interval=500
+        #save_interval=50
         img_loader = celeb_loader(batch_size=batch_size)
         for i in range (epochs):
             for j in range (int(save_interval)):
@@ -286,17 +286,23 @@ if __name__ == '__main__':
                 # Generate fake images
                 noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
                 fake_images = vaegan_decoder.predict(noise)
-                x = np.concatenate((real_images, fake_images))
+                #x = np.concatenate((real_images, fake_images))
                 #print(x.shape)
                 # Label real and fake images
-                y = np.ones([2 * batch_size, 1])
-                y[batch_size:, :] = 0
+                y1 = np.ones([batch_size, 1])
+                y2 = np.zeros([batch_size, 1])
                 #print(y.shape)
                 # Train Discriminator
-                metrics = vaegan_disc.train_on_batch(x, y)
+                metrics = vaegan_disc.train_on_batch(real_images, y1)
                 loss = metrics[0]
                 disc_acc = metrics[1]
-                log = "%d-%d: [discriminator loss: %f, acc: %f]" % (i,j, loss, disc_acc)
+                log = "%d-%d: [discriminator loss (real): %f, acc: %f]" % (i,j, loss, disc_acc)
+                #print(log)
+
+                metrics = vaegan_disc.train_on_batch(fake_images, y2)
+                loss = metrics[0]
+                disc_acc = metrics[1]
+                log = "%s [discriminator loss (fake): %f, acc: %f]" % (log, loss, disc_acc)
                 #print(log)
 
                 # Generate fake image
@@ -309,22 +315,49 @@ if __name__ == '__main__':
                 acc = metrics[1]
                 logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
                 print(logg)
+
+                if j % 500 == 0:
+                    model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+                    print("Saving model to", model_save_path)
+                    gan.save_weights(model_save_path)
+                    z_sample = np.random.uniform(size=(1,z_dim), low=-1.0, high=1.0)
+                    out_random = vaegan_decoder.predict(z_sample)
+                    out_filename = 'gan_images/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+                    out_random = out_random*255
+                    out_random.astype(np.uint8)
+                    #cv2.imshow("image",out_random[0])
+                    #cv2.waitKey(0)
+                    #cv2.destroyAllWindows()
+                    cv2.imwrite(out_filename, out_random[0])
+
             model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
             print("Saving model to", model_save_path)
             gan.save_weights(model_save_path)
+            z_sample = np.random.uniform(size=(1,z_dim), low=-1.0, high=1.0)
+            out_random = vaegan_decoder.predict(z_sample)
+            out_filename = 'gan_images/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+            out_random = out_random*255
+            out_random.astype(np.uint8)
+            #cv2.imshow("image",out_random[0])
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
+            cv2.imwrite(out_filename, out_random[0])
 
 
 
 
     #output sampling
+    '''
     num_outputs = 10
     z_sample = np.random.uniform(size=(num_outputs,z_dim), low=-3.0, high=3.0)
     out_random = vaegan_decoder.predict(z_sample)
+    print("min", np.min(out_random))
+    print("max", np.max(out_random))
     for i in range (out_random.shape[0]):
         cv2.imshow("image",out_random[i])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    '''
+
     some_gen = celeb_loader(batch_size=128)
     data, _ = next(some_gen)
     #print(vae)
