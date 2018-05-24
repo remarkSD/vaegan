@@ -178,7 +178,7 @@ batch_size = 64
 kernel_size = (5,5)
 filters = np.array([64,32])
 z_dim = 128
-epochs = 1000
+epochs = 250
 lr = 0.0003
 decay = 0
 
@@ -318,7 +318,7 @@ if __name__ == '__main__':
             logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
             print(logg)
 
-            if j % 200 == 0 or j == save_interval-1:
+            if j % 200 == 0:
                 model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
                 print("Saving model to", model_save_path)
                 gan.save_weights(model_save_path)
@@ -341,7 +341,7 @@ if __name__ == '__main__':
                 #cv2.destroyAllWindows()
 
                 # Write samples
-                out_filename = 'gan_images/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+                out_filename = 'gan_checkpoints/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
                 cv2.imwrite(out_filename, fig)
 
 
