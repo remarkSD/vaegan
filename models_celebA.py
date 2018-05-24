@@ -102,7 +102,7 @@ def generator(num_filters,z_dim=2048, ch=3, kernel_size=(5,5), strides=(2,2)):
     model = Conv2DTranspose(ch, kernel_size=kernel_size, strides=1, padding='same', name='dec_deconv2D_04')(model)
     model = Activation('tanh')(model)
 
-    dec_model = Model([X], [model], name="decoder")
+    dec_model = Model(X, model, name="decoder")
     return dec_model
 
 def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), strides=(2,2)):
@@ -138,7 +138,7 @@ def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), strides=
     model = Dense(1, name="disc_dense_02")(model)
     model = Activation('sigmoid', name='disc_sigmoid')(model)
 
-    disc_model = Model([X], [model],name="discriminator")
+    disc_model = Model(X, model,name="discriminator")
 
     return disc_model
 
