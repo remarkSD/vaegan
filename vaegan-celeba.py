@@ -32,7 +32,7 @@ z_dim = 128
 epochs = 100
 lr = 0.0003
 decay = 0
-dir='/home/airscan-razer04/Documents/datasets/img_align_celeba/'
+dir='/home/raimarc/Documents/img_align_celeba/'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -125,7 +125,8 @@ if __name__ == '__main__':
 
             #vaegan_encoder.train_on_batch(real_images, None)
             # Generate fake images
-            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            #noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            noise = np.random.normal(size=(batch_size, z_dim))
             fake_images = vaegan_decoder.predict(noise)
             ae_images = vaegan_decoder.predict(vaegan_encoder.predict(real_images)[2])
             #x = np.concatenate((real_images, fake_images))
@@ -154,7 +155,8 @@ if __name__ == '__main__':
             #print(log)
 
             # Generate fake image
-            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            #noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            noise = np.random.normal(size=(batch_size, z_dim))
             # Label fake images as real
             y = np.ones([batch_size, 1])
             # Train the Adversarial network
