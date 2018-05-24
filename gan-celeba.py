@@ -196,12 +196,12 @@ if __name__ == '__main__':
     inputs = Input(shape=input_shape)
 
     #vaegan_encoder = encoder(num_filters=filters[0], ch=channels, rows=height, cols=width, z_dim=z_dim)
-    vaegan_decoder = generator(num_filters=filters[1], z_dim=z_dim, ch=channels)
+
     vaegan_disc = discriminator(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
     #vaegan_decoder = build_generator(Input(shape=(z_dim,)), image_size)
     #vaegan_disc = build_discriminator(inputs)
     #vaegan_encoder.summary()
-    vaegan_decoder.summary()
+
 
 
     disc_optimizer = RMSprop(lr=lr)
@@ -209,29 +209,11 @@ if __name__ == '__main__':
                         optimizer=disc_optimizer,
                         metrics=['accuracy'])
     vaegan_disc.summary()
-    '''
-    # Instantiate VAE model
-    models = (vaegan_encoder, vaegan_decoder)
-    outputs = vaegan_decoder(vaegan_encoder(inputs)[2])
-    print("outputshape", outputs.shape)
-    vae = Model(inputs, outputs, name='vae')
 
-    reconstruction_loss = binary_crossentropy(K.flatten(inputs),
-                                              K.flatten(outputs))
 
-    reconstruction_loss *= image_size * image_size
-    kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
-    kl_loss = K.sum(kl_loss, axis=-1)
-    kl_loss *= -0.5
-    vae_loss = K.mean(reconstruction_loss + kl_loss)
-
-    vae.add_loss(vae_loss)
-    rmsprop = RMSprop(lr=0.0001)
-    vae.compile(optimizer=rmsprop)
-    vae.summary()
-    #print(vae)
-    #plot_model(vae, to_file='vae_dcnn.png', show_shapes=True)
-    '''
+    # Build Generator/Decoder
+    vaegan_decoder = generator(num_filters=32, z_dim=z_dim, ch=channels)
+    vaegan_decoder.summary()
     # Instantiate GAN model
     gan_input = Input(shape=(z_dim,))
     gan_output = vaegan_disc(vaegan_decoder(gan_input))
@@ -285,30 +267,35 @@ if __name__ == '__main__':
         for j in range (int(save_interval)):
             # Load real images
             real_images, _ = next(img_loader)
-            # Generate fake images
-            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
-            fake_images = vaegan_decoder.predict(noise)
             #x = np.concatenate((real_images, fake_images))
             #print(x.shape)
             # Label real and fake images
-            y1 = np.ones([batch_size, 1])
-            y2 = np.zeros([batch_size, 1])
+            y = np.ones([batch_size, 1])
             #print(y.shape)
             # Train Discriminator
-            metrics = vaegan_disc.train_on_batch(real_images, y1)
+            metrics = vaegan_disc.train_on_batch(real_images, y)
             loss = metrics[0]
+            disc_loss = loss
             disc_acc = metrics[1]
             log = "%d-%d: [discriminator loss (real): %f, acc: %f]" % (i,j, loss, disc_acc)
             #print(log)
 
-            metrics = vaegan_disc.train_on_batch(fake_images, y2)
+            # Generate fake images
+            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            #noise = np.random.normal(size=(batch_size, z_dim))
+            fake_images = vaegan_decoder.predict(noise)
+            y = np.zeros([batch_size, 1])
+
+            metrics = vaegan_disc.train_on_batch(fake_images, y)
             loss = metrics[0]
+            disc_loss = (loss + disc_loss)/2
             disc_acc = metrics[1]
             log = "%s [discriminator loss (fake): %f, acc: %f]" % (log, loss, disc_acc)
             #print(log)
 
             # Generate fake image
             noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            #noise = np.random.normal(size=(batch_size, z_dim))
             # Label fake images as real
             y = np.ones([batch_size, 1])
             # Train the Adversarial network
@@ -317,11 +304,28 @@ if __name__ == '__main__':
             acc = metrics[1]
             logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
             print(logg)
+            '''
+            if (loss - disc_loss > 2):
+                # Generate fake image
+                noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+                #noise = np.random.normal(size=(batch_size, z_dim))
+                # Label fake images as real
+                y = np.ones([batch_size, 1])
+                # Train the Adversarial network
+                metrics = gan.train_on_batch(noise, y)
+                loss = metrics[0]
+                acc = metrics[1]
+                logg = "[adversarial loss: %f, acc: %f]" % (loss, acc)
+                print(logg)
+            '''
+
 
             if j % 200 == 0:
                 model_save_path = 'gan_checkpoints/gan-celebA-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
                 print("Saving model to", model_save_path)
                 gan.save_weights(model_save_path)
+
+                #z_sample = np.random.uniform(size=(25,z_dim), low=-1.0, high=1.0)
 
                 # Predict Sample
                 out_random = vaegan_decoder.predict(z_sample)
