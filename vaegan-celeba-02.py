@@ -88,6 +88,7 @@ if __name__ == '__main__':
     outputs2 = vaegan_disc(vaegan_decoder(z_in))
     #z_input = vaegan_decoder(vaegan_encoder(z_in)[2])
     #print("outputshape", outputs.shape)
+    
     vaegan_encoder.trainable=False
     vaegan_decoder.trainable=True
     vaegan_disc.trainable=False
