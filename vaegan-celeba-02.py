@@ -62,7 +62,12 @@ if __name__ == '__main__':
     vaegan_disc = discriminator_l(num_filters=32, z_dim=z_dim, ch=3, rows=height, cols=width)
     #vaegan_decoder = build_generator(Input(shape=(z_dim,)), image_size)
     #vaegan_disc = build_discriminator(inputs)
-#    vaegan_decoder.summary()
+    vaegan_encoder.summary()
+    vaegan_decoder.summary()
+    vaegan_disc.summary()
+    plot_model(vaegan_encoder, to_file='enc_skel.png', show_shapes=True)
+    plot_model(vaegan_decoder, to_file='dec_skel.png', show_shapes=True)
+    plot_model(vaegan_disc, to_file='disc_skel.png', show_shapes=True)
 
     # Create Discriminator Model
     disc_optimizer = RMSprop(lr=lr)
@@ -253,7 +258,7 @@ if __name__ == '__main__':
                 cv2.imwrite(vae_out_filename, fig)
 
                 # Predict VAE Sample
-                out_random = vaegan_decoder.predict(vaegan_encoder.predict(inputs)[2])
+                out_random = vaegan_decoder.predict(vaegan_encoder.predict(real_images)[2])
                 # Unnormalize samples
                 out_random = (out_random + 1)*127.5
                 out_random = out_random.astype(np.uint8)
