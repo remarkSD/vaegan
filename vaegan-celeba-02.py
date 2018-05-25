@@ -103,13 +103,13 @@ if __name__ == '__main__':
 
     # Create Encoder Model
     #outputs1 = vaegan_encoder(inputs)[2]
-    outputs = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))[1]
+    outputs = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))
     #print("outputshape", outputs.shape)
     vaegan_encoder.trainable=True
     vaegan_decoder.trainable=False
     vaegan_disc.trainable=False
     optimizer = RMSprop(lr=lr)
-    encoder_model = Model(inputs, [outputs], name='encoder')
+    encoder_model = Model(inputs, outputs, name='encoder')
 
     kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
     kl_loss = K.sum(kl_loss, axis=-1)
@@ -233,13 +233,11 @@ if __name__ == '__main__':
                 decoder_model.save_weights(model_save_path)
 
                 # Predict Sample
-                z_sample = np.random.uniform(size=(25,z_dim), low=-1.0, high=1.0)
+                z_sample =  np.random.normal(size=(batch_size, z_dim))
                 out_random = vaegan_decoder.predict(z_sample)
                 # Unnormalize samples
                 out_random = (out_random + 1)*127.5
                 out_random = out_random.astype(np.uint8)
-                print("MAX", np.max(out_random))
-                print("MIN", np.min(out_random))
 
                 # Put samples in grid
                 fig = np.zeros((64*5,64*5,3))
@@ -251,8 +249,28 @@ if __name__ == '__main__':
                 #cv2.destroyAllWindows()
 
                 # Write samples
+                vae_out_filename = 'vaegan_cps/vae_out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+                cv2.imwrite(vae_out_filename, fig)
+
+                # Predict VAE Sample
+                out_random = vaegan_decoder.predict(vaegan_encoder.predict(inputs)[2])
+                # Unnormalize samples
+                out_random = (out_random + 1)*127.5
+                out_random = out_random.astype(np.uint8)
+                # Put samples in grid
+                fig = np.zeros((64*5,64*5*2,3))
+                for k1 in range (5):
+                    for k2 in range (5):
+                        fig[64*k2:64*(k2+1),64*k1:64*(k1+1),:] = out_random[k1*5+k2]
+                        fig[64*k2:64*(k2+1),64*(k1+5):64*(k1+1+5)+,:] = real_images[k1*5+k2]
+                #cv2.imshow("image",out_random[0])
+                #cv2.waitKey(0)
+                #cv2.destroyAllWindows()
+
+                # Write samples
                 out_filename = 'vaegan_cps/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
                 cv2.imwrite(out_filename, fig)
+
 
 
 
