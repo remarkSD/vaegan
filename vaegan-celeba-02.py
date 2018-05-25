@@ -69,7 +69,33 @@ if __name__ == '__main__':
     plot_model(vaegan_decoder, to_file='dec_skel.png', show_shapes=True)
     plot_model(vaegan_disc, to_file='disc_skel.png', show_shapes=True)
 
+
+    # Create Encoder Model
+    #outputs1 = vaegan_encoder(inputs)[2]
+    outputs = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))
+    #print("outputshape", outputs.shape)
+    vaegan_encoder.trainable=True
+    vaegan_decoder.trainable=False
+    vaegan_disc.trainable=False
+    enc_optimizer = RMSprop(lr=lr*0.5)
+    encoder_model = Model(inputs, outputs, name='encoder')
+
+    kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
+    kl_loss = K.sum(kl_loss, axis=-1)
+    kl_loss *= -0.5
+    llike_loss = nll_loss(mean=vaegan_disc(inputs)[1], x=outputs[1])
+    enc_loss = K.mean(kl_loss + llike_loss)
+
+    encoder_model.add_loss(enc_loss)
+    encoder_model.compile(optimizer=enc_optimizer,
+                            metrics=['accuracy'])
+    print("Encoder")
+    encoder_model.summary()
+    plot_model(encoder_model, to_file='encoder.png', show_shapes=True)
+
+
     # Create Discriminator Model
+    vaegan_disc.trainable=True
     disc_optimizer = RMSprop(lr=lr)
     outputs = vaegan_disc(inputs)[0]
     disc_model = Model(inputs, outputs, name = 'discriminator')
@@ -95,45 +121,24 @@ if __name__ == '__main__':
     optimizer = RMSprop(lr=lr)
     decoder_model = Model([inputs, z_in], [outputs1[0], outputs1[1], outputs2[0]], name='decoder')
     gamma = 1e-6
-    gan_loss_1 = binary_crossentropy(K.ones_like(outputs1[0]), outputs1[0])
-    gan_loss_2 = binary_crossentropy(K.ones_like(outputs2[0]), outputs2[0])
-    #gan_loss_1 = binary_crossentropy(K.zeros_like(outputs1[0]), outputs1[0])
-    #gan_loss_2 = binary_crossentropy(K.zeros_like(outputs2[0]), outputs2[0])
+    #gan_loss_1 = binary_crossentropy(K.ones_like(outputs1[0]), outputs1[0])
+    #gan_loss_2 = binary_crossentropy(K.ones_like(outputs2[0]), outputs2[0])
+    gan_loss_1 = binary_crossentropy(K.zeros_like(outputs1[0]), outputs1[0])
+    gan_loss_2 = binary_crossentropy(K.zeros_like(outputs2[0]), outputs2[0])
     gan_loss = K.mean(gan_loss_1 + gan_loss_2)
     llike_loss = nll_loss(mean=vaegan_disc(inputs)[1], x=outputs1[1])
     #dec_loss = -gan_loss + gamma*llike_loss
     #decoder_model.add_loss(dec_loss)
-    #decoder_model.add_loss(-1.0*gan_loss)
-    decoder_model.add_loss(gan_loss)
+    decoder_model.add_loss(-1.0*gan_loss)
+    #decoder_model.add_loss(gan_loss)
     decoder_model.add_loss(gamma*llike_loss)
     decoder_model.compile(optimizer=optimizer,
                             metrics=['accuracy'])
+    print("Decoder")
     decoder_model.summary()
     plot_model(decoder_model, to_file='decoder.png', show_shapes=True)
 
 
-    # Create Encoder Model
-    #outputs1 = vaegan_encoder(inputs)[2]
-    outputs = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))
-    #print("outputshape", outputs.shape)
-    vaegan_encoder.trainable=True
-    vaegan_decoder.trainable=False
-    vaegan_disc.trainable=False
-    optimizer = RMSprop(lr=lr)
-    encoder_model = Model(inputs, outputs, name='encoder')
-
-    kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
-    kl_loss = K.sum(kl_loss, axis=-1)
-    kl_loss *= -0.5
-    llike_loss = nll_loss(mean=vaegan_disc(inputs)[1], x=outputs1[1])
-    enc_loss = K.mean(kl_loss + llike_loss)
-
-    encoder_model.add_loss(enc_loss)
-    encoder_model.compile(optimizer=optimizer,
-                            metrics=['accuracy'])
-    print("Encoder")
-    encoder_model.summary()
-    plot_model(encoder_model, to_file='encoder.png', show_shapes=True)
     '''
     # Design vaegan_encoder
     reconstruction_loss = mse(K.flatten(inputs), K.flatten(outputs))
