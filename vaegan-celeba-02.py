@@ -262,7 +262,7 @@ if __name__ == '__main__':
                 for k1 in range (5):
                     for k2 in range (5):
                         fig[64*k2:64*(k2+1),64*k1:64*(k1+1),:] = out_random[k1*5+k2]
-                        fig[64*k2:64*(k2+1),64*(k1+5):64*(k1+1+5)+,:] = real_images[k1*5+k2]
+                        fig[64*k2:64*(k2+1),64*(k1+5):64*(k1+1+5),:] = real_images[k1*5+k2]
                 #cv2.imshow("image",out_random[0])
                 #cv2.waitKey(0)
                 #cv2.destroyAllWindows()
