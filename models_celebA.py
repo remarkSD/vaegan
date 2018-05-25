@@ -142,6 +142,44 @@ def discriminator(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), strides=
 
     return disc_model
 
+
+def discriminator_l(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), strides=(2,2)):
+    model = Sequential()
+    X = Input(shape=(rows[-1],cols[-1],ch))
+    model = Conv2D(num_filters, kernel_size=kernel_size, strides=1, padding='same', name='disc_conv2D_01')(X)
+    model = BN(name="disc_bn_01")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model = Conv2D(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_02')(model)
+    model = BN( name="disc_bn_02")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_03')(model)
+    model = BN(name="disc_bn_03")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model_l = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_04')(model)
+    model = BN(name="disc_bn_04")(model_l)
+    model = LeakyReLU(0.2)(model_l)
+    #model = Activation('relu')(model)
+
+    #model = Reshape((8,8,256))(model)
+    model = Flatten()(model)
+    model = Dense(512, name="disc_dense_01")(model)
+    model = BN(name="disc_bn_05")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model = Dense(1, name="disc_dense_02")(model)
+    model = Activation('sigmoid', name='disc_sigmoid')(model)
+
+    disc_model = Model(X, [model, model_l],name="discriminator")
+
+    return disc_model
+
 if __name__ == '__main__':
     df_dim = 64
     batch_size = 64
