@@ -255,7 +255,7 @@ if __name__ == '__main__':
                 #cv2.destroyAllWindows()
 
                 # Write samples
-                vae_out_filename = 'vaegan_cps/vae_out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+                vae_out_filename = 'vaegan_cps/gan_out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
                 cv2.imwrite(vae_out_filename, fig)
 
                 # Predict VAE Sample
@@ -274,7 +274,7 @@ if __name__ == '__main__':
                 #cv2.destroyAllWindows()
 
                 # Write samples
-                out_filename = 'vaegan_cps/out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
+                out_filename = 'vaegan_cps/vae_out' + '{:05}'.format(i)+'-'+'{:05}'.format(j)+'.jpg'
                 cv2.imwrite(out_filename, fig)
 
 
