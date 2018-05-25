@@ -163,7 +163,7 @@ def discriminator_l(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), stride
 
     model_l = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_04')(model)
     model = BN(name="disc_bn_04")(model_l)
-    model = LeakyReLU(0.2)(model_l)
+    model = LeakyReLU(0.2)(model)
     #model = Activation('relu')(model)
 
     #model = Reshape((8,8,256))(model)

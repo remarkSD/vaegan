@@ -97,10 +97,15 @@ if __name__ == '__main__':
     gamma = 1e-6
     gan_loss_1 = binary_crossentropy(K.ones_like(outputs1[0]), outputs1[0])
     gan_loss_2 = binary_crossentropy(K.ones_like(outputs2[0]), outputs2[0])
-    gan_loss = (gan_loss_1 + gan_loss_2)/2
-    llike_loss = nll_loss(outputs1[1], vaegan_disc(inputs)[1])
-    dec_loss = gan_loss + gamma*llike_loss
-    decoder_model.add_loss(dec_loss)
+    #gan_loss_1 = binary_crossentropy(K.zeros_like(outputs1[0]), outputs1[0])
+    #gan_loss_2 = binary_crossentropy(K.zeros_like(outputs2[0]), outputs2[0])
+    gan_loss = K.mean(gan_loss_1 + gan_loss_2)
+    llike_loss = nll_loss(mean=vaegan_disc(inputs)[1], x=outputs1[1])
+    #dec_loss = -gan_loss + gamma*llike_loss
+    #decoder_model.add_loss(dec_loss)
+    #decoder_model.add_loss(-1.0*gan_loss)
+    decoder_model.add_loss(gan_loss)
+    decoder_model.add_loss(gamma*llike_loss)
     decoder_model.compile(optimizer=optimizer,
                             metrics=['accuracy'])
     decoder_model.summary()
@@ -120,7 +125,7 @@ if __name__ == '__main__':
     kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
     kl_loss = K.sum(kl_loss, axis=-1)
     kl_loss *= -0.5
-    llike_loss = nll_loss(outputs[1], vaegan_disc(inputs)[1])
+    llike_loss = nll_loss(mean=vaegan_disc(inputs)[1], x=outputs1[1])
     enc_loss = K.mean(kl_loss + llike_loss)
 
     encoder_model.add_loss(enc_loss)
@@ -167,19 +172,19 @@ if __name__ == '__main__':
     '''
     if args.weights:
         #print("loading weights",args.weights)
-        vaegan.load_weights(args.weights)
+        decoder_model.load_weights(args.weights)
         #print(vae)
 
 
     save_interval = int(202599/batch_size)
     #epochs=1
     #save_interval=50
-    img_loader = celeb_loader(dir=dir,
-                            batch_size=batch_size, norm=True)
+    img_loader = celeb_loader(dir=dir, batch_size=batch_size, norm=True)
     for i in range (epochs):
         for j in range (int(save_interval)):
             # Load real images
             real_images, _ = next(img_loader)
+            #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             y = np.ones([batch_size, 1])
 
             # Train encoder
@@ -189,6 +194,8 @@ if __name__ == '__main__':
             log = "%d-%d [enc loss: %f]" % (i,j,loss)
 
             #vaegan_encoder.train_on_batch(real_images, None)
+            real_images, _ = next(img_loader)
+            #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             # Generate fake images
             #noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
             noise = np.random.normal(size=(batch_size, z_dim))
@@ -202,6 +209,8 @@ if __name__ == '__main__':
             #print(y.shape)
 
             # Train Discriminator
+            real_images, _ = next(img_loader)
+            #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             metrics = disc_model.train_on_batch(real_images, y1)
             loss = metrics[0]
             disc_acc = metrics[1]
@@ -227,10 +236,11 @@ if __name__ == '__main__':
             # Label fake images as real
             y = np.ones([batch_size, 1])
             # Train the Adversarial network
+            real_images, _ = next(img_loader)
+            #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             metrics = decoder_model.train_on_batch([real_images, noise], None)
-            loss = metrics[0]
-            acc = metrics[1]
-            logg = "%s [adversarial loss: %f, acc: %f]" % (log, loss, acc)
+            loss = metrics
+            logg = "%s [adversarial loss: %f]" % (log, loss)
             print(logg)
 
             if j % 200 == 0:
