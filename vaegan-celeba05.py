@@ -82,7 +82,7 @@ if __name__ == '__main__':
     z_mean, z_logvar, z = vaegan_encoder(inputs)
     #outputs = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))
     outputs = vaegan_disc_l(vaegan_decoder(z))
-    enc_optimizer = RMSprop(lr=lr)
+    enc_optimizer = RMSprop(lr=lr*0.5)
     encoder_model = Model(inputs, outputs, name='encoder')
     #kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
     kl_loss = 1 + z_logvar - K.square(z_mean) - K.exp(z_logvar)
