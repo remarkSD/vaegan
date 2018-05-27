@@ -82,7 +82,7 @@ if __name__ == '__main__':
     z_mean, z_logvar, z = vaegan_encoder(inputs)
     #outputs = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))
     outputs = vaegan_disc_l(vaegan_decoder(z))
-    enc_optimizer = RMSprop(lr=lr*0.5)
+    enc_optimizer = RMSprop(lr=lr*0.4)
     encoder_model = Model(inputs, outputs, name='encoder')
     #kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
     kl_loss = 1 + z_logvar - K.square(z_mean) - K.exp(z_logvar)
@@ -184,11 +184,17 @@ if __name__ == '__main__':
     vaegan.summary()
     '''
     if args.weights:
-        #print("loading weights",args.weights)
-        decoder_model.load_weights(args.weights)
-        #decoder_model.load_weights('decoder-' + args.weights)
-        #encoder_model.load_weights('encoder-' + args.weights)
-        #disc_model.load_weights('disc-' + args.weights)
+        #decoder_model.load_weights(args.weights)
+        i = 0
+        j = 2400
+        folder = 'vaegan_cps_new07_cont02_model01-1400'
+        dec_model_save_path = folder + '/dec_vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+        enc_model_save_path = folder + '/enc_vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+        disc_model_save_path = folder + '/disc_vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+        print("loading weights", dec_model_save_path)
+        encoder_model.load_weights(enc_model_save_path)
+        disc_model.load_weights(disc_model_save_path)
+        decoder_model.load_weights(dec_model_save_path)
 
         #print(vae)
 
@@ -261,11 +267,14 @@ if __name__ == '__main__':
 
             if j % 200 == 0:
                 model_save_path = 'vaegan_cps/vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+                dec_model_save_path = 'vaegan_cps/dec_vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+                enc_model_save_path = 'vaegan_cps/enc_vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
+                disc_model_save_path = 'vaegan_cps/disc_vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
                 print("Saving model to", model_save_path)
-                decoder_model.save_weights(model_save_path)
-                #decoder_model.save_weights('decoder-' + model_save_path)
-                #encoder_model.save_weights('encoder-' + model_save_path)
-                #disc_model.save_weights('disc-' + model_save_path)
+                #decoder_model.save_weights(model_save_path)
+                decoder_model.save_weights(dec_model_save_path)
+                encoder_model.save_weights(enc_model_save_path)
+                disc_model.save_weights(disc_model_save_path)
 
                 # Predict Sample
                 #z_sample =  np.random.normal(size=(batch_size, z_dim))
