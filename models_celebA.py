@@ -60,8 +60,8 @@ def encoder(num_filters, ch, rows, cols,z_dim=2048, kernel_size=(5,5), strides=(
     mean = BN(name="enc_mean_bn")(mean)
     logsigma = BN(name="enc_sigma_bn")(logsigma)
 
-    mean = Activation('relu', name="enc_mean_relu")(mean)
-    logsigma = Activation('relu', name="enc_sigma_relu")(logsigma)
+    mean = LeakyReLU(0.2)(mean)
+    logsigma = LeakyReLU(0.2)(logsigma)
     z = Lambda(sampling, output_shape=(z_dim,), name='z')([mean, logsigma])
     meansigma = Model([X], [mean, logsigma, z], name="encoder")
 
@@ -179,6 +179,43 @@ def discriminator_l(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), stride
     disc_model = Model(X, [model, model_l],name="discriminator")
 
     return disc_model
+
+def discriminator_l2(num_filters, ch, rows, cols, z_dim,kernel_size=(5,5), strides=(2,2)):
+    model = Sequential()
+    X = Input(shape=(rows[-1],cols[-1],ch))
+    model = Conv2D(num_filters, kernel_size=kernel_size, strides=1, padding='same', name='disc_conv2D_01')(X)
+    model = BN(name="disc_bn_01")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model = Conv2D(num_filters*4,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_02')(model)
+    model = BN( name="disc_bn_02")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_03')(model)
+    model = BN(name="disc_bn_03")(model)
+    model = LeakyReLU(0.2)(model)
+    #model = Activation('relu')(model)
+
+    model_l = Conv2D(num_filters*8,kernel_size=kernel_size, strides=strides, padding='same', name='disc_conv2D_04')(model)
+    d_model = BN(name="disc_bn_04")(model_l)
+    d_model = LeakyReLU(0.2)(d_model)
+    #model = Activation('relu')(model)
+
+    #model = Reshape((8,8,256))(model)
+    d_model = Flatten()(d_model)
+    d_model = Dense(512, name="disc_dense_01")(d_model)
+    d_model = BN(name="disc_bn_05")(d_model)
+    d_model = LeakyReLU(0.2)(d_model)
+    #model = Activation('relu')(model)
+
+    d_model = Dense(1, name="disc_dense_02")(d_model)
+    d_model = Activation('sigmoid', name='disc_sigmoid')(d_model)
+
+    disc_model = Model(X, d_model,name="discriminator")
+    disc_model_l2 = Model(X, model_l,name="discriminator-l2")
+    return disc_model, disc_model_l2
 
 if __name__ == '__main__':
     df_dim = 64
