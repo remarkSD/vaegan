@@ -77,7 +77,7 @@ if __name__ == '__main__':
     vaegan_encoder.trainable=True
     vaegan_decoder.trainable=False
     vaegan_disc.trainable=False
-    enc_optimizer = RMSprop(lr=lr*0.5)
+    enc_optimizer = RMSprop(lr=lr)
     encoder_model = Model(inputs, outputs, name='encoder')
 
     kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     # Create Discriminator Model
     vaegan_encoder.trainable=False
-    vaegan_decoder.trainable=False
+    vaegan_decoder.trainable=True
     vaegan_disc.trainable=True
     disc_optimizer = RMSprop(lr=lr)
     outputs = vaegan_disc(inputs)[0]
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     outputs1 = vaegan_disc(vaegan_decoder(vaegan_encoder(inputs)[2]))
     z_in = Input(shape=(z_dim,))
     outputs2 = vaegan_disc(vaegan_decoder(z_in))
-    outputs3 = vaegan_disc(inputs)
+    #outputs3 = vaegan_disc(inputs)
     #z_input = vaegan_decoder(vaegan_encoder(z_in)[2])
     #print("outputshape", outputs.shape)
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     gan_loss_1 = binary_crossentropy(K.zeros_like(outputs1[0]), outputs1[0])
     gan_loss_2 = binary_crossentropy(K.zeros_like(outputs2[0]), outputs2[0])
     gan_loss = K.mean(gan_loss_1 + gan_loss_2)
-    llike_loss = nll_loss(mean=outputs3[1], x=outputs1[1])
+    #llike_loss = nll_loss(mean=outputs3[1], x=outputs1[1])
     #dec_loss = -gan_loss + gamma*llike_loss
     #decoder_model.add_loss(dec_loss)
     decoder_model.add_loss(-1.0*gan_loss)
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     kl_loss = 1 + vaegan_encoder(inputs)[1] - K.square(vaegan_encoder(inputs)[0]) - K.exp(vaegan_encoder(inputs)[1])
     kl_loss = K.sum(kl_loss, axis=-1)
     kl_loss *= -0.5
-    vae_loss = K.mean(reconstruction_loss + kl_loss)
+    vae_loss v K.mean(reconstruction_loss + kl_loss)
     vae.add_loss(vae_loss)
     rmsprop = RMSprop(lr=lr)
     vae.compile(optimizer=rmsprop)
@@ -181,6 +181,10 @@ if __name__ == '__main__':
     if args.weights:
         #print("loading weights",args.weights)
         decoder_model.load_weights(args.weights)
+        #decoder_model.load_weights('decoder-' + args.weights)
+        #encoder_model.load_weights('encoder-' + args.weights)
+        #disc_model.load_weights('disc-' + args.weights)
+
         #print(vae)
 
 
@@ -202,11 +206,11 @@ if __name__ == '__main__':
             log = "%d-%d [enc loss: %f]" % (i,j,loss)
 
             #vaegan_encoder.train_on_batch(real_images, None)
-            #real_images, _ = next(img_loader)
+            real_images, _ = next(img_loader)
             #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             # Generate fake images
-            #noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
-            noise = np.random.normal(size=(batch_size, z_dim))
+            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            #noise = np.random.normal(size=(batch_size, z_dim))
             fake_images = vaegan_decoder.predict(noise)
             ae_images = vaegan_decoder.predict(vaegan_encoder.predict(real_images)[2])
             #x = np.concatenate((real_images, fake_images))
@@ -217,7 +221,7 @@ if __name__ == '__main__':
             #print(y.shape)
 
             # Train Discriminator
-            #real_images, _ = next(img_loader)
+            real_images, _ = next(img_loader)
             #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             metrics = disc_model.train_on_batch(real_images, y1)
             loss = metrics[0]
@@ -239,12 +243,12 @@ if __name__ == '__main__':
 
             # Decoder/Generator Training
             # Generate fake image
-            #noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+            noise = np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
             #noise = np.random.normal(size=(batch_size, z_dim))
             # Label fake images as real
             y = np.ones([batch_size, 1])
             # Train the Adversarial network
-            #real_images, _ = next(img_loader)
+            real_images, _ = next(img_loader)
             #real_images, _ = next(celeb_loader(dir=dir, batch_size=batch_size, norm=True))
             metrics = decoder_model.train_on_batch([real_images, noise], None)
             loss = metrics
@@ -254,11 +258,13 @@ if __name__ == '__main__':
             if j % 200 == 0:
                 model_save_path = 'vaegan_cps/vaegan-model-'+'{:05}'.format(i)+'-'+'{:05}'.format(j)+'.h5'
                 print("Saving model to", model_save_path)
-                decoder_model.save_weights(model_save_path)
+                decoder_model.save_weights('decoder-' + model_save_path)
+                encoder_model.save_weights('encoder-' + model_save_path)
+                disc_model.save_weights('disc-' + model_save_path)
 
                 # Predict Sample
-                z_sample =  np.random.normal(size=(batch_size, z_dim))
-                #z_sample =  np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
+                #z_sample =  np.random.normal(size=(batch_size, z_dim))
+                z_sample =  np.random.uniform(size=(batch_size, z_dim), low=-1.0, high=1.0)
                 out_random = vaegan_decoder.predict(z_sample)
                 # Unnormalize samples
                 out_random = (out_random + 1)*127.5
